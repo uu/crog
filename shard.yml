@@ -1,0 +1,29 @@
+name: crog
+version: 0.0.1
+
+authors:
+  - Michael Pirogov <vbnet.ru@gmail.com>
+
+targets:
+  crog:
+    main: src/crog.cr
+
+crystal: 1.11.2
+
+license: MIT
+dependencies:
+  crometheus:
+    github: darwinnn/crometheus
+    branch: master
+  validator:
+    github: nicolab/crystal-validator
+  opengraph:
+    github: uu/opengraph.cr
+  redis:
+    github: stefanwille/crystal-redis
+  sanitize:
+    github: straight-shoota/sanitize
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+    version: ~> 1.6.1

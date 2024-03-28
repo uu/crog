@@ -1,0 +1,4 @@
+# add prometheus metrics
+# add grafana dashboard
+# tests
+# better redis error handling

@@ -1,0 +1,38 @@
+version: 2.0
+shards:
+  ameba:
+    git: https://github.com/crystal-ameba/ameba.git
+    version: 1.6.1
+
+  crometheus:
+    git: https://github.com/darwinnn/crometheus.git
+    version: 0.3.0+git.commit.c71a13174d02e3767b62faa1771132d4245e1ce5
+
+  crystagiri:
+    git: https://github.com/madeindjs/crystagiri.git
+    version: 0.3.5
+
+  opengraph:
+    git: https://github.com/uu/opengraph.cr.git
+    version: 0.1.1+git.commit.5a1b131a04bdeb8c71e07bf443e18e9215487c1f
+
+  pool:
+    git: https://github.com/ysbaddaden/pool.git
+    version: 0.2.4
+
+  prop:
+    git: https://github.com/nicolab/crystal-prop.git
+    version: 0.7.1
+
+  redis:
+    git: https://github.com/stefanwille/crystal-redis.git
+    version: 2.9.1
+
+  sanitize:
+    git: https://github.com/straight-shoota/sanitize.git
+    version: 0.1.0+git.commit.75c141b619c77956e88f557149566cd28876398b
+
+  validator:
+    git: https://github.com/nicolab/crystal-validator.git
+    version: 1.11.0
+
