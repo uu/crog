@@ -2,6 +2,16 @@
 
 Fetches opengraph meta and translate it in JSON.
 
+## Installation
+
+### Docker
+
+`docker compose up -d`
+
+## Using
+
+`curl localhost:8080 -d '{"uri": "telegram.org"}' && echo`
+
 ## Contributing
 
 1. Fork it (<https://github.com/uu/crog/fork>)

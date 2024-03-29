@@ -16,13 +16,13 @@ module Crog
       @settings = Settings.new
 
       OptionParser.parse do |opt|
-        opt.banner = "crog [-d] [-h] [-v] [--host 127.0.0.1] [-p 8080] [-t 3600]"
+        opt.banner = "crog [-d] [-h] [-v] [--host 127.0.0.1] [--port 8080] [--redis-host 127.0.0.1] [--redis-port 6379]"
 
         opt.on("--host 127.0.0.1", "Address listen to") do |host|
           @settings.host = host
         end
 
-        opt.on("-p 9192", "Port listen to") do |port|
+        opt.on("--port 8080", "Port listen to") do |port|
           @settings.port = port.to_i
         end
 
@@ -35,7 +35,7 @@ module Crog
         end
 
         opt.on("-d", "If set, debug messages will be shown.") do
-          @settings.debug = true
+          @settings.debug = false
         end
 
         opt.on("-h", "--help", "Displays this message.") do

@@ -1,0 +1,19 @@
+version: '3.7'
+services:
+  crog:
+    build:
+      context: .
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      - redis
+    links:
+      - redis
+    restart: unless-stopped
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8080
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+  redis:
+    image: redis:alpine

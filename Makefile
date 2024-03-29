@@ -16,3 +16,5 @@ run:
 	crystal run src/crog.cr
 test: shards-devel
 	./bin/ameba
+docker:
+	docker compose up

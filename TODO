@@ -2,3 +2,4 @@
 # add grafana dashboard
 # tests
 # better redis error handling
+# redis auth
