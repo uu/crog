@@ -9,7 +9,7 @@ require "./tools/*"
 module Crog
   struct UriEntity
     include JSON::Serializable
-    property uri : String
+    property url : String
     property timeout : Int32?
   end
 
@@ -50,13 +50,14 @@ module Crog
         body = request.body.not_nil!.gets_to_end
         begin
           JSON.parse(body)
-        rescue JSON::ParseException
+          uri_ent = UriEntity.from_json(body)
+        rescue ex: JSON::ParseException | JSON::SerializableError
           res.code, res.text = 500, "Invalid JSON"
-          Log.error { "Invalid JSON #{body}" }
+          Log.error { "Invalid JSON #{body}. #{ex.message}" }
           return res
         end
-        uri = UriEntity.from_json(body)
-        res = parse_uri(uri)
+
+        res = parse_uri(uri_ent)
       elsif request.method == "GET"
         res.code, res.text = 200, "Healthy"
       else
@@ -67,11 +68,11 @@ module Crog
 
     private def parse_uri(uri_entity : UriEntity)
       res = Result.new
-      uri = sanitize_uri(uri_entity.uri)
+      uri = sanitize_uri(uri_entity.url)
       Log.info { "sanitized_uri: #{uri}" }
 
       unless Valid.domain?(uri) || Valid.url?(uri)
-        res.code, res.text = 500, "Invalid uri provided"
+        res.code, res.text = 500, "Invalid url provided"
         return res
       end
       # check if it is already cached
@@ -98,8 +99,8 @@ module Crog
       res.type = "application/json"
       if og["title"]?
         res.json.merge!(og)
-        res.json = build_answer(res, mixin)
       end
+      res.json = build_answer(res, mixin)
       # write to cache good or missing
       Cache.set(uri, res.json.to_json)
       res
@@ -112,8 +113,6 @@ module Crog
 
     private def build_answer(data, mixin : JSON::OnSteroids)
       template = @@options.settings.template
-      template
-      # mixin = JSON::OnSteroids.new(JSON.parse(@@options.settings.mixin))
       payload = JSON::OnSteroids.new(data.json)
       # adding mixin
       payload.merge!(mixin)
