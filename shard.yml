@@ -23,6 +23,9 @@ dependencies:
     github: stefanwille/crystal-redis
   sanitize:
     github: straight-shoota/sanitize
+  json_on_steroids:
+    github: anykeyh/json_on_steroids
+    branch: master
 development_dependencies:
   ameba:
     github: crystal-ameba/ameba

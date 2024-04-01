@@ -10,10 +10,9 @@ services:
     links:
       - redis
     restart: unless-stopped
-    environment:
-      - HOST=0.0.0.0
-      - PORT=8080
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+    env_file:
+      - path: .env.default
+      - path: .env
+        required: false
   redis:
     image: redis:alpine

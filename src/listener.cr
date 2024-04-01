@@ -1,22 +1,23 @@
 require "http/server"
-require "json"
 require "redis"
 require "validator"
 require "sanitize"
+require "json"
+require "json_on_steroids"
 require "./tools/*"
 
 module Crog
-  class UriEntity
+  struct UriEntity
     include JSON::Serializable
     property uri : String
     property timeout : Int32?
   end
 
-  class Result
+  struct Result
     property code : Int32 = 200
     property type : String = "text/plain"
     property text : String = ""
-    property json : Hash(String, String) = {"title" => "", "image" => "", "description" => "", "site_name" => "", "contentType" => "OpenGraph"}
+    property json : JSON::OnSteroids = JSON::OnSteroids.new({"title": "", "image": "", "description": "", "site_name": ""})
   end
 
   class Listener
@@ -67,7 +68,7 @@ module Crog
     private def parse_uri(uri_entity : UriEntity)
       res = Result.new
       uri = sanitize_uri(uri_entity.uri)
-      Log.info { "san: #{uri}" }
+      Log.info { "sanitized_uri: #{uri}" }
 
       unless Valid.domain?(uri) || Valid.url?(uri)
         res.code, res.text = 500, "Invalid uri provided"
@@ -82,18 +83,23 @@ module Crog
         return res
       end
 
+      mixin = JSON::OnSteroids.new(JSON.parse(@@options.settings.mixin))
       begin
-        og = OpenGraph.from_url(uri)
+        og = JSON::OnSteroids.new(OpenGraph.from_url(uri))
       rescue Socket::Addrinfo::Error
-        # res.code, res.text = 404, "Error resolving #{uri}"
         Log.error { "Error resolving #{uri}" }
         # write bad one to cache for 10 minutes
+        # mixin with default response
+        res.json = build_answer(res, mixin)
         Cache.set(uri, res.json.to_json, 360)
         return res
       end
 
       res.type = "application/json"
-      res.json.merge!(og) if og["title"]?
+      if og["title"]?
+        res.json.merge!(og)
+        res.json = build_answer(res, mixin)
+      end
       # write to cache good or missing
       Cache.set(uri, res.json.to_json)
       res
@@ -102,6 +108,17 @@ module Crog
     private def sanitize_uri(uri : String)
       sanitizer = Sanitize::URISanitizer.new
       sanitizer.sanitize(URI.parse(uri)).to_s
+    end
+
+    private def build_answer(data, mixin : JSON::OnSteroids)
+      template = @@options.settings.template
+      template
+      # mixin = JSON::OnSteroids.new(JSON.parse(@@options.settings.mixin))
+      payload = JSON::OnSteroids.new(data.json)
+      # adding mixin
+      payload.merge!(mixin)
+      # place it in the template
+      JSON::OnSteroids.new(JSON.parse(template.gsub("<data>", payload)))
     end
   end
 end

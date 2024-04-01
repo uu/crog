@@ -6,6 +6,8 @@ module Crog
     property port = 8080
     property redis_host = "127.0.0.1"
     property redis_port = 6379
+    property template = "<data>"
+    property mixin = "{}"
     property? debug = false
   end
 
@@ -32,6 +34,14 @@ module Crog
 
         opt.on("--redis-port 6379", "Redis port") do |redis_port|
           @settings.redis_port = redis_port.to_i
+        end
+
+        opt.on("--template {<data>}", "Template to use") do |template|
+          @settings.template = template
+        end
+
+        opt.on("--mixin {}", "Mixin to use") do |mixin|
+          @settings.mixin = mixin
         end
 
         opt.on("-d", "If set, debug messages will be shown.") do
