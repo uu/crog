@@ -14,6 +14,8 @@ Requirements: `docker-compose 2.24+`
 
 `curl localhost:8080 -d '{"uri": "telegram.org"}' && echo`
 
+`http://localhost:8080/?{"uri":"telegram.org"}`
+
 ## Configuring
 
 Mix in JSON object to response.

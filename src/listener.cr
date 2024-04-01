@@ -15,8 +15,6 @@ module Crog
 
   struct Result
     property code : Int32 = 200
-    property type : String = "text/plain"
-    property text : String = ""
     property json : JSON::OnSteroids = JSON::OnSteroids.new({"title": "", "image": "", "description": "", "site_name": ""})
   end
 
@@ -33,10 +31,9 @@ module Crog
         HTTP::CompressHandler.new,
       ]) do |context|
         result = parse_and_answer(context.request)
-        context.response.content_type = result.type
+        context.response.content_type = "application/json"
         context.response.status_code = result.code
-        output = result.text.empty? ? result.json.to_json : result.text
-        context.response.print output
+        context.response.print result.json.to_json
       end
       server.bind_tcp @@options.settings.host, @@options.settings.port
       Log.info { "Listening on #{@@options.settings.host}:#{@@options.settings.port}" }
@@ -52,16 +49,25 @@ module Crog
           JSON.parse(body)
           uri_ent = UriEntity.from_json(body)
         rescue ex: JSON::ParseException | JSON::SerializableError
-          res.code, res.text = 500, "Invalid JSON"
-          Log.error { "Invalid JSON #{body}. #{ex.message}" }
+          res.code = 500
+          Log.error { "POST Invalid JSON #{body}. #{ex.message}" }
           return res
         end
-
         res = parse_uri(uri_ent)
+      elsif request.method == "GET" && request.path =~ /^(\/|\/favicon\.ico)$/
+        res.json = build_answer(res)
       elsif request.method == "GET"
-        res.code, res.text = 200, "Healthy"
+        begin
+          req = URI.decode(request.query.to_s)
+          uri_ent = UriEntity.from_json(req)
+        rescue ex: JSON::ParseException | JSON::SerializableError
+            Log.error { "GET Invalid JSON #{req.to_s}. #{ex.message}" }
+            res.json = build_answer(res)
+            return res
+        end
+        res = parse_uri(uri_ent)
       else
-        res.code, res.text = 422, "Unprocessable request"
+        res.code = 422
       end
       res
     end
@@ -72,7 +78,8 @@ module Crog
       Log.info { "sanitized_uri: #{uri}" }
 
       unless Valid.domain?(uri) || Valid.url?(uri)
-        res.code, res.text = 500, "Invalid url provided"
+        res.code = 500
+        res.json = build_answer(res)
         return res
       end
       # check if it is already cached
@@ -80,27 +87,23 @@ module Crog
 
       if cached
         Log.debug { "Using cache!" }
-        res.text = cached.to_s
+        res.json = JSON::OnSteroids.new(JSON.parse(cached.to_s))
         return res
       end
 
-      mixin = JSON::OnSteroids.new(JSON.parse(@@options.settings.mixin))
       begin
         og = JSON::OnSteroids.new(OpenGraph.from_url(uri))
       rescue Socket::Addrinfo::Error
         Log.error { "Error resolving #{uri}" }
         # write bad one to cache for 10 minutes
         # mixin with default response
-        res.json = build_answer(res, mixin)
+        res.json = build_answer(res)
         Cache.set(uri, res.json.to_json, 360)
         return res
       end
 
-      res.type = "application/json"
-      if og["title"]?
-        res.json.merge!(og)
-      end
-      res.json = build_answer(res, mixin)
+      res.json.merge!(og) if og["title"]?
+      res.json = build_answer(res)
       # write to cache good or missing
       Cache.set(uri, res.json.to_json)
       res
@@ -111,8 +114,9 @@ module Crog
       sanitizer.sanitize(URI.parse(uri)).to_s
     end
 
-    private def build_answer(data, mixin : JSON::OnSteroids)
+    private def build_answer(data)
       template = @@options.settings.template
+      mixin = JSON::OnSteroids.new(JSON.parse(@@options.settings.mixin))
       payload = JSON::OnSteroids.new(data.json)
       # adding mixin
       payload.merge!(mixin)
